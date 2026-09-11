@@ -296,7 +296,7 @@ function prep(gltf){
 /* ---------------- hero studio ---------------- */
 const heroCanvas = document.getElementById('heroCanvas');
 const heroWrap = document.getElementById('heroCanvasWrap');
-const hren = new THREE.WebGLRenderer({canvas:heroCanvas,antialias:true});
+const hren = new THREE.WebGLRenderer({canvas:heroCanvas,antialias:true,preserveDrawingBuffer:true});
 hren.setPixelRatio(Math.min(devicePixelRatio,2));
 hren.shadowMap.enabled=true;hren.shadowMap.type=THREE.PCFSoftShadowMap;
 hren.toneMapping=THREE.ACESFilmicToneMapping;hren.toneMappingExposure=1.0;
@@ -329,7 +329,7 @@ hctrl.addEventListener('end',()=>{hIdle=setTimeout(()=>hAuto=true,2600)});
 
 /* ---------------- qc console ---------------- */
 const qCanvas=document.getElementById('qcCanvas');
-const qren=new THREE.WebGLRenderer({canvas:qCanvas,antialias:true});
+const qren=new THREE.WebGLRenderer({canvas:qCanvas,antialias:true,preserveDrawingBuffer:true});
 qren.setPixelRatio(Math.min(devicePixelRatio,2));
 qren.shadowMap.enabled=true;qren.shadowMap.type=THREE.PCFSoftShadowMap;
 qren.toneMapping=THREE.ACESFilmicToneMapping;qren.toneMappingExposure=1.0;
