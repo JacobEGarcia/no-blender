@@ -413,20 +413,21 @@ function resize(){
 addEventListener('resize',resize);
 
 const clock=new THREE.Clock();
-function tick(){
-  requestAnimationFrame(tick);
-  const dt=clock.getDelta();
+function frame(){
+  const dt=Math.min(clock.getDelta(),0.1);
   if(hAuto) hgroup.rotation.y+=dt*0.25;
   hctrl.update();
   if(qstate.turn){qstate.turnAngle+=dt*0.35;qUpdateCamera();}
   hren.render(hscene,hcam);
   qren.render(qscene,qcam);
 }
+function tick(){ requestAnimationFrame(tick); frame(); }
+setInterval(frame,200);
 
 Promise.all([loadGLB('2-mech-a.glb'),loadGLB('3-mech-b.glb')]).then(([ga,gb])=>{
   models.a=prep(ga);models.b=prep(gb);
   mountUnit(hgroup,'a');mountUnit(qgroup,'a');
-  resize();qUpdateCamera();qUpdateLight();tick();
+  resize();qUpdateCamera();qUpdateLight();frame();tick();
 }).catch(err=>{
   document.querySelector('.hero-title p').textContent='MODEL FAILED TO LOAD — '+err;
   console.error(err);
