@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NO BLENDER — a mech no human modeled</title>
+<meta name="description" content="A combat mech designed, reconstructed, and shipped by AI end to end. No human opened Blender.">
+<style>
+  :root{
+    --bg:#f2f1ed; --panel:#ffffff; --ink:#17171b; --ink2:#5b5b62; --line:#dcdad3;
+    --navy:#1d3a5f; --dark:#101114; --dark2:#181a1e; --darkline:#2a2d33; --amber:#d97b2f;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'Inter',-apple-system,'Helvetica Neue',Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .mono{font-family:var(--mono)}
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;
+    padding:14px 28px;background:rgba(242,241,237,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .wordmark{font-weight:650;font-size:15px;letter-spacing:.18em}
+  .wordmark span{color:var(--navy)}
+  .topmeta{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink2);text-transform:uppercase}
+  .topmeta b{color:var(--ink);font-weight:500}
+  section{position:relative}
+  /* ---------- hero ---------- */
+  .hero{height:100vh;min-height:620px;display:flex;flex-direction:column}
+  .hero-canvas{flex:1;position:relative;overflow:hidden}
+  .hero-canvas canvas{display:block;width:100%;height:100%;touch-action:none}
+  .hero-title{position:absolute;top:76px;left:28px;pointer-events:none}
+  .hero-title h1{font-size:clamp(28px,4.4vw,54px);font-weight:600;letter-spacing:-.02em;line-height:1.02}
+  .hero-title h1 em{font-style:normal;color:var(--navy)}
+  .hero-title p{margin-top:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+  .hero-title .jp{margin-top:6px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ink2)}
+  .unit-switch{position:absolute;left:28px;bottom:26px;display:flex;gap:10px;z-index:5}
+  .unit-btn{border:1px solid var(--line);background:rgba(255,255,255,.75);backdrop-filter:blur(6px);padding:10px 16px;cursor:pointer;
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);transition:all .2s}
+  .unit-btn b{display:block;font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--ink);margin-bottom:2px}
+  .unit-btn.active{border-color:var(--navy);background:#fff;color:var(--navy)}
+  .unit-btn.active b{color:var(--navy)}
+  .hero-stats{position:absolute;right:28px;bottom:26px;text-align:right;font-family:var(--mono);font-size:10.5px;
+    letter-spacing:.08em;color:var(--ink2);line-height:1.9;text-transform:uppercase;z-index:5}
+  .hero-stats b{color:var(--ink);font-weight:500}
+  .hint{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);font-family:var(--mono);font-size:10px;
+    letter-spacing:.2em;color:var(--ink2);text-transform:uppercase;z-index:5}
+  /* ---------- sections ---------- */
+  .wrap{max-width:1180px;margin:0 auto;padding:96px 28px}
+  .sec-label{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--navy);margin-bottom:14px}
+  .sec-title{font-size:clamp(24px,3vw,36px);font-weight:600;letter-spacing:-.02em;margin-bottom:8px}
+  .sec-sub{color:var(--ink2);font-size:15px;max-width:560px;line-height:1.6}
+  .rule{height:1px;background:var(--line);margin:0}
+  .pipe-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:44px}
+  .pipe-cell{background:var(--panel);padding:28px}
+  .pipe-num{font-family:var(--mono);font-size:11px;color:var(--navy);letter-spacing:.15em;margin-bottom:34px}
+  .pipe-cell h3{font-size:17px;font-weight:600;margin-bottom:10px;letter-spacing:-.01em}
+  .pipe-cell p{font-size:13.5px;color:var(--ink2);line-height:1.65}
+  .pipe-cell .tag{display:inline-block;margin-top:18px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink2);border:1px solid var(--line);padding:4px 8px}
+  /* ---------- qc sheet ---------- */
+  .sheet{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin-top:44px}
+  .sheet figure{background:var(--panel)}
+  .sheet img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover}
+  .sheet figcaption{display:flex;justify-content:space-between;padding:10px 14px;font-family:var(--mono);font-size:10px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);border-top:1px solid var(--line)}
+  /* ---------- console ---------- */
+  .console{background:var(--dark);color:#e8e8ea}
+  .console .wrap{max-width:1280px}
+  .console-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:26px}
+  .console .sec-label{color:var(--amber)}
+  .console h2{font-size:clamp(22px,2.6vw,32px);font-weight:600;letter-spacing:-.02em}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#9aa0aa;
+    border:1px solid var(--darkline);padding:5px 9px;border-radius:2px}
+  .chip.on{color:var(--amber);border-color:var(--amber)}
+  .console-grid{display:grid;grid-template-columns:1fr 300px;gap:1px;background:var(--darkline);border:1px solid var(--darkline)}
+  .console-canvas{background:var(--dark2);min-height:480px;position:relative}
+  .console-canvas canvas{display:block;width:100%;height:100%;min-height:480px;touch-action:none}
+  .console-panel{background:var(--dark2);padding:22px 22px 26px;font-family:var(--mono)}
+  .cp-title{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#7c828c;border-bottom:1px solid var(--darkline);
+    padding-bottom:12px;margin-bottom:6px}
+  .ctl{padding:13px 0;border-bottom:1px solid var(--darkline)}
+  .ctl-row{display:flex;justify-content:space-between;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#9aa0aa;margin-bottom:8px}
+  .ctl-row .val{color:#e8e8ea}
+  .ctl input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:2px;background:#33363d;outline:none;cursor:pointer}
+  .ctl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;background:var(--amber);border-radius:0;cursor:pointer}
+  .ctl input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--amber);border:0;border-radius:0;cursor:pointer}
+  .toggles{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:16px}
+  .tg{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#9aa0aa;background:transparent;
+    border:1px solid var(--darkline);padding:9px 6px;cursor:pointer;transition:all .15s;text-align:center}
+  .tg.on{color:var(--amber);border-color:var(--amber)}
+  .cunit{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:16px}
+  .console-status{padding:14px 0 0;font-size:10px;color:#7c828c;letter-spacing:.06em;line-height:1.9}
+  .console-status b{color:#e8e8ea;font-weight:500}
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--line)}
+  .foot{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;max-width:1180px;margin:0 auto;padding:44px 28px 60px}
+  .foot .col{max-width:420px}
+  .foot h4{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink2);margin-bottom:12px}
+  .foot p{font-size:13px;color:var(--ink2);line-height:1.7}
+  .foot a{color:var(--navy);text-decoration:none;border-bottom:1px solid var(--line)}
+  .foot a:hover{border-color:var(--navy)}
+  @media (max-width:860px){
+    .pipe-grid{grid-template-columns:1fr}
+    .sheet{grid-template-columns:1fr}
+    .console-grid{grid-template-columns:1fr}
+    .hero-stats{display:none}
+    .hint{display:none}
+    .topmeta{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wordmark">NO&nbsp;BLENDER<span>&nbsp;/&nbsp;BUILD&nbsp;114</span></div>
+  <div class="topmeta mono">IMAGE&nbsp;→&nbsp;MESH&nbsp;→&nbsp;BROWSER&nbsp;&nbsp;·&nbsp;&nbsp;<b>0 MINUTES IN BLENDER</b></div>
+</header>
+
+<section class="hero">
+  <div class="hero-canvas" id="heroCanvasWrap"><canvas id="heroCanvas"></canvas>
+    <div class="hero-title">
+      <h1>A combat mech<br>no human <em>modeled.</em></h1>
+      <p>CONCEPT → SINGLE-IMAGE 3D RECONSTRUCTION → LIVE GLB</p>
+      <p class="jp">人間はBlenderを開かない — the human never opens Blender.</p>
+    </div>
+    <div class="unit-switch">
+      <button class="unit-btn active" data-unit="a"><b>UNIT 01</b>QUADRUPED WALKER</button>
+      <button class="unit-btn" data-unit="b"><b>UNIT 02</b>HEXAPOD SIEGE</button>
+    </div>
+    <div class="hero-stats mono" id="heroStats">
+      <div><b>19,038</b> VERTICES</div>
+      <div><b>37,999</b> TRIANGLES</div>
+      <div><b>VERTEX-COLOR</b> PBR</div>
+      <div><b>≈6 S</b> RECONSTRUCTION</div>
+    </div>
+    <div class="hint mono">DRAG TO ORBIT — SCROLL FOR BUILD SHEET</div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<section>
+  <div class="wrap">
+    <div class="sec-label mono">THE PIPELINE</div>
+    <h2 class="sec-title">Three steps, zero modeling software</h2>
+    <p class="sec-sub">The brief taken from a viral build thread: produce a game-ready mech with one hard rule — no human ever opens a 3D editor. Every judgment call below was made by a model.</p>
+    <div class="pipe-grid">
+      <div class="pipe-cell">
+        <div class="pipe-num">01</div>
+        <h3>Generate</h3>
+        <p>An image model designs the machine: armor language, proportions, wear. The render is the spec — there is no sketch phase, no mood board, no human art direction pass.</p>
+        <span class="tag">SYNTHESIZED REFERENCE</span>
+      </div>
+      <div class="pipe-cell">
+        <div class="pipe-num">02</div>
+        <h3>Reconstruct</h3>
+        <p>TripoSR, an open single-image reconstruction model, lifts the reference into a textured triangle mesh — background stripped, geometry marched, vertex colors baked. About six seconds on a free GPU.</p>
+        <span class="tag">IMAGE → MESH</span>
+      </div>
+      <div class="pipe-cell">
+        <div class="pipe-num">03</div>
+        <h3>Ship</h3>
+        <p>The GLB is decimated to 38k triangles with colors preserved, normalized to a ground plane, and embedded in this page. What you orbited above is the exact output — unretouched.</p>
+        <span class="tag">GLB → BROWSER</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<section>
+  <div class="wrap">
+    <div class="sec-label mono">BUILD SHEET</div>
+    <h2 class="sec-title">Reference in, geometry out</h2>
+    <p class="sec-sub">Left: the generated reference. Right: the exact pixels the reconstructor saw after automatic background removal and foreground framing.</p>
+    <div class="sheet">
+      <figure>
+        <img src="4-concept-a.jpg" alt="Unit 01 generated reference">
+        <figcaption class="mono"><span>UNIT 01 — REFERENCE</span><span>SYNTHESIZED</span></figcaption>
+      </figure>
+      <figure>
+        <img src="6-proc-a.jpg" alt="Unit 01 reconstruction input">
+        <figcaption class="mono"><span>UNIT 01 — RECON INPUT</span><span>BG REMOVED, AUTO</span></figcaption>
+      </figure>
+      <figure>
+        <img src="5-concept-b.jpg" alt="Unit 02 generated reference">
+        <figcaption class="mono"><span>UNIT 02 — REFERENCE</span><span>SYNTHESIZED</span></figcaption>
+      </figure>
+      <figure>
+        <img src="7-proc-b.jpg" alt="Unit 02 reconstruction input">
+        <figcaption class="mono"><span>UNIT 02 — RECON INPUT</span><span>BG REMOVED, AUTO</span></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="console">
+  <div class="wrap">
+    <div class="console-head">
+      <div>
+        <div class="sec-label mono">検査 CONSOLE — QC/114</div>
+        <h2>Field inspection</h2>
+      </div>
+      <div class="chips">
+        <span class="chip on">MESH 37,999 TRI</span>
+        <span class="chip on">VERTEX COLOR</span>
+        <span class="chip">RIG N/A — STATIC</span>
+        <span class="chip">BLENDER SESSIONS 0</span>
+      </div>
+    </div>
+    <div class="console-grid">
+      <div class="console-canvas"><canvas id="qcCanvas"></canvas></div>
+      <div class="console-panel">
+        <div class="cp-title">CAMERA / カメラ</div>
+        <div class="cunit">
+          <button class="tg on" id="qcUnitA">UNIT 01</button>
+          <button class="tg" id="qcUnitB">UNIT 02</button>
+        </div>
+        <div class="ctl">
+          <div class="ctl-row"><span>AZIMUTH</span><span class="val" id="vAz">35°</span></div>
+          <input type="range" id="sAz" min="-180" max="180" value="35" step="1">
+        </div>
+        <div class="ctl">
+          <div class="ctl-row"><span>ELEVATION</span><span class="val" id="vEl">18°</span></div>
+          <input type="range" id="sEl" min="2" max="70" value="18" step="1">
+        </div>
+        <div class="ctl">
+          <div class="ctl-row"><span>DISTANCE</span><span class="val" id="vDi">4.4 M</span></div>
+          <input type="range" id="sDi" min="26" max="80" value="44" step="1">
+        </div>
+        <div class="cp-title" style="margin-top:16px">LIGHTING / 照明</div>
+        <div class="ctl">
+          <div class="ctl-row"><span>KEY ANGLE</span><span class="val" id="vLi">40°</span></div>
+          <input type="range" id="sLi" min="-180" max="180" value="40" step="1">
+        </div>
+        <div class="ctl">
+          <div class="ctl-row"><span>EXPOSURE</span><span class="val" id="vEx">1.00</span></div>
+          <input type="range" id="sEx" min="40" max="180" value="100" step="1">
+        </div>
+        <div class="toggles">
+          <button class="tg on" id="tTurn">TURNTABLE</button>
+          <button class="tg" id="tWire">WIREFRAME</button>
+        </div>
+        <div class="console-status" id="qcStatus">
+          STATUS <b>NOMINAL</b><br>
+          OPERATOR <b>NONE — AUTOMATED</b><br>
+          EDITOR SESSIONS <b>0</b>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot">
+    <div class="col">
+      <h4>PROVENANCE</h4>
+      <p>Rebuilt from <a href="https://x.com/koguGameDev/status/2098268769693163576">@koguGameDev's no-Blender modeling experiment</a> — reference images synthesized in-session, meshes reconstructed with <a href="https://huggingface.co/stabilityai/TripoSR">TripoSR</a> (Stability AI × Tripo), shipped as embedded GLB. Free tiers only.</p>
+    </div>
+    <div class="col">
+      <h4>THE RULE</h4>
+      <p>"人間がBlender開かない" — the human never opens Blender. Concept, geometry, texture, and this page were produced without a human touching modeling software. A person did write this sentence.</p>
+    </div>
+  </div>
+</footer>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+
+const loader = new GLTFLoader();
+const models = {};
+
+function loadGLB(url){
+  return fetch(url).then(r=>r.arrayBuffer()).then(buf=>new Promise((res,rej)=>loader.parse(buf,'',g=>res(g),e=>rej(e))));
+}
+function prep(gltf){
+  const root = gltf.scene;
+  root.traverse(o=>{
+    if(o.isMesh){
+      o.castShadow=true;o.receiveShadow=false;
+      if(o.material){o.material.metalness=0.12;o.material.roughness=0.82;o.material.needsUpdate=true;}
+    }
+  });
+  return root;
+}
+
+/* ---------------- hero studio ---------------- */
+const heroCanvas = document.getElementById('heroCanvas');
+const heroWrap = document.getElementById('heroCanvasWrap');
+const hren = new THREE.WebGLRenderer({canvas:heroCanvas,antialias:true});
+hren.setPixelRatio(Math.min(devicePixelRatio,2));
+hren.shadowMap.enabled=true;hren.shadowMap.type=THREE.PCFSoftShadowMap;
+hren.toneMapping=THREE.ACESFilmicToneMapping;hren.toneMappingExposure=1.0;
+hren.outputColorSpace=THREE.SRGBColorSpace;
+const hscene=new THREE.Scene();hscene.background=new THREE.Color(0xf2f1ed);
+hscene.fog=new THREE.Fog(0xf2f1ed,9,20);
+const hcam=new THREE.PerspectiveCamera(34,1,0.1,60);
+hcam.position.set(2.9,1.7,3.4);
+const hctrl=new OrbitControls(hcam,heroCanvas);
+hctrl.target.set(0,0.72,0);hctrl.enableDamping=true;hctrl.dampingFactor=0.06;
+hctrl.minDistance=2.2;hctrl.maxDistance=9;hctrl.maxPolarAngle=Math.PI*0.52;
+hctrl.enablePan=false;
+
+hscene.add(new THREE.HemisphereLight(0xffffff,0xd8d2c6,0.85));
+const hkey=new THREE.DirectionalLight(0xffffff,2.6);
+hkey.position.set(4,6,3);hkey.castShadow=true;
+hkey.shadow.mapSize.set(2048,2048);
+hkey.shadow.camera.left=-3;hkey.shadow.camera.right=3;
+hkey.shadow.camera.top=3;hkey.shadow.camera.bottom=-3;
+hkey.shadow.camera.far=20;hkey.shadow.bias=-0.0004;hkey.shadow.radius=4;
+hscene.add(hkey);
+const hfill=new THREE.DirectionalLight(0xdfe8ff,0.7);hfill.position.set(-4,3,-3);hscene.add(hfill);
+const hground=new THREE.Mesh(new THREE.CircleGeometry(9,64),new THREE.ShadowMaterial({opacity:0.16}));
+hground.rotation.x=-Math.PI/2;hground.receiveShadow=true;hscene.add(hground);
+
+const hgroup=new THREE.Group();hscene.add(hgroup);
+let hUnit='a', hAuto=true, hIdle=null;
+hctrl.addEventListener('start',()=>{hAuto=false;clearTimeout(hIdle)});
+hctrl.addEventListener('end',()=>{hIdle=setTimeout(()=>hAuto=true,2600)});
+
+/* ---------------- qc console ---------------- */
+const qCanvas=document.getElementById('qcCanvas');
+const qren=new THREE.WebGLRenderer({canvas:qCanvas,antialias:true});
+qren.setPixelRatio(Math.min(devicePixelRatio,2));
+qren.shadowMap.enabled=true;qren.shadowMap.type=THREE.PCFSoftShadowMap;
+qren.toneMapping=THREE.ACESFilmicToneMapping;qren.toneMappingExposure=1.0;
+qren.outputColorSpace=THREE.SRGBColorSpace;
+const qscene=new THREE.Scene();qscene.background=new THREE.Color(0x101114);
+const qcam=new THREE.PerspectiveCamera(34,1,0.1,60);
+const qgroup=new THREE.Group();qscene.add(qgroup);
+
+qscene.add(new THREE.HemisphereLight(0x3a3f4a,0x0a0a0c,0.7));
+const qkey=new THREE.DirectionalLight(0xfff2e2,3.0);
+qkey.castShadow=true;qkey.shadow.mapSize.set(2048,2048);
+qkey.shadow.camera.left=-3;qkey.shadow.camera.right=3;
+qkey.shadow.camera.top=3;qkey.shadow.camera.bottom=-3;qkey.shadow.camera.far=20;qkey.shadow.bias=-0.0004;
+qscene.add(qkey);
+const qrim=new THREE.DirectionalLight(0x86a6d8,1.6);qrim.position.set(-3,2,-4);qscene.add(qrim);
+const qground=new THREE.Mesh(new THREE.CircleGeometry(9,64),new THREE.ShadowMaterial({opacity:0.35}));
+qground.rotation.x=-Math.PI/2;qground.receiveShadow=true;qscene.add(qground);
+const qgrid=new THREE.PolarGridHelper(4.5,12,6,64,0x2a2d33,0x1d2025);
+qgrid.position.y=0.002;qscene.add(qgrid);
+
+const qstate={unit:'a',az:35,el:18,dist:4.4,light:40,ex:1.0,turn:true,wire:false,turnAngle:0};
+
+function qUpdateCamera(){
+  const az=THREE.MathUtils.degToRad(qstate.az)+qstate.turnAngle;
+  const el=THREE.MathUtils.degToRad(qstate.el);
+  const d=qstate.dist;
+  qcam.position.set(d*Math.cos(el)*Math.sin(az),0.7+d*Math.sin(el),d*Math.cos(el)*Math.cos(az));
+  qcam.lookAt(0,0.72,0);
+}
+function qUpdateLight(){
+  const a=THREE.MathUtils.degToRad(qstate.light);
+  qkey.position.set(5*Math.sin(a),6,5*Math.cos(a));
+}
+function qWire(on){
+  qgroup.traverse(o=>{if(o.isMesh&&o.material){o.material.wireframe=on;o.material.needsUpdate=true;}});
+}
+
+const $=id=>document.getElementById(id);
+function bindSlider(id,vid,fmt,set){
+  $(id).addEventListener('input',e=>{
+    const v=parseFloat(e.target.value);set(v);$(vid).textContent=fmt(v);
+  });
+}
+bindSlider('sAz','vAz',v=>v+'°',v=>{qstate.az=v;qUpdateCamera();});
+bindSlider('sEl','vEl',v=>v+'°',v=>{qstate.el=v;qUpdateCamera();});
+bindSlider('sDi','vDi',v=>(v/10).toFixed(1)+' M',v=>{qstate.dist=v/10;qUpdateCamera();});
+bindSlider('sLi','vLi',v=>v+'°',v=>{qstate.light=v;qUpdateLight();});
+bindSlider('sEx','vEx',v=>(v/100).toFixed(2),v=>{qstate.ex=v/100;qren.toneMappingExposure=qstate.ex;});
+$('tTurn').addEventListener('click',()=>{qstate.turn=!qstate.turn;$('tTurn').classList.toggle('on',qstate.turn);});
+$('tWire').addEventListener('click',()=>{qstate.wire=!qstate.wire;$('tWire').classList.toggle('on',qstate.wire);qWire(qstate.wire);});
+$('qcUnitA').addEventListener('click',()=>setQUnit('a'));
+$('qcUnitB').addEventListener('click',()=>setQUnit('b'));
+
+function setQUnit(u){
+  qstate.unit=u;
+  $('qcUnitA').classList.toggle('on',u==='a');
+  $('qcUnitB').classList.toggle('on',u==='b');
+  mountUnit(qgroup,u);qWire(qstate.wire);
+}
+
+/* ---------------- shared ---------------- */
+function mountUnit(group,u){
+  while(group.children.length) group.remove(group.children[0]);
+  group.add(models[u]);
+}
+const STATS={a:['19,038','QUADRUPED WALKER'],b:['19,030','HEXAPOD SIEGE']};
+document.querySelectorAll('.unit-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.unit-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');hUnit=btn.dataset.unit;mountUnit(hgroup,hUnit);
+    document.getElementById('heroStats').firstElementChild.innerHTML='<b>'+STATS[hUnit][0]+'</b> VERTICES';
+  });
+});
+
+function resize(){
+  const hw=heroWrap.clientWidth,hh=heroWrap.clientHeight;
+  hren.setSize(hw,hh,false);hcam.aspect=hw/hh;hcam.updateProjectionMatrix();
+  const qw=qCanvas.parentElement.clientWidth,qh=qCanvas.parentElement.clientHeight;
+  qren.setSize(qw,qh,false);qcam.aspect=qw/qh;qcam.updateProjectionMatrix();
+}
+addEventListener('resize',resize);
+
+const clock=new THREE.Clock();
+function tick(){
+  requestAnimationFrame(tick);
+  const dt=clock.getDelta();
+  if(hAuto) hgroup.rotation.y+=dt*0.25;
+  hctrl.update();
+  if(qstate.turn){qstate.turnAngle+=dt*0.35;qUpdateCamera();}
+  hren.render(hscene,hcam);
+  qren.render(qscene,qcam);
+}
+
+Promise.all([loadGLB('2-mech-a.glb'),loadGLB('3-mech-b.glb')]).then(([ga,gb])=>{
+  models.a=prep(ga);models.b=prep(gb);
+  mountUnit(hgroup,'a');mountUnit(qgroup,'a');
+  resize();qUpdateCamera();qUpdateLight();tick();
+}).catch(err=>{
+  document.querySelector('.hero-title p').textContent='MODEL FAILED TO LOAD — '+err;
+  console.error(err);
+});
+</script>
+</body>
+</html>
